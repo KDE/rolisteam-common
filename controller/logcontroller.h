@@ -29,8 +29,8 @@ public:
     enum StorageMode
     {
         Console= 1,
-        File   = 2,
-        Gui    = 4,
+        File= 2,
+        Gui= 4,
         Network= 8
     };
     Q_ENUM(StorageMode)
@@ -54,7 +54,7 @@ public:
 
 signals:
     void showMessage(QString, LogController::LogLevel);
-    void sendOffMessage(QString, LogController::LogLevel, QString category, QString timestamps);
+    void sendOffMessage(QString, QString, QString category, QString timestamps);
     void logLevelChanged();
 
 public slots:
@@ -66,10 +66,10 @@ public slots:
     void setCurrentModes(const LogController::StorageModes& currentModes);
 
 private:
-    LogLevel m_logLevel        = Error;
+    LogLevel m_logLevel= Error;
     StorageModes m_currentModes= Console;
-    bool m_signalInspection    = false;
-    bool m_listenOutSide       = false;
+    bool m_signalInspection= false;
+    bool m_listenOutSide= false;
     QTextStream m_file;
     QFile m_currentFile;
     QMutex m_mutex;

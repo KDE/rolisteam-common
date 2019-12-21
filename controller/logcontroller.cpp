@@ -19,7 +19,7 @@ void messageHandler(QtMsgType type, const QMessageLogContext& context, const QSt
         return;
 
     QByteArray localMsg= msg.toLocal8Bit();
-    auto msgFormated   = QStringLiteral("%1 (%2:%3), %4")
+    auto msgFormated= QStringLiteral("%1 (%2:%3), %4")
                           .arg(QString(localMsg.constData()), QString(context.file), QString(context.line),
                                QString(context.function));
     LogController::LogLevel cLevel= LogController::Error;
@@ -147,9 +147,9 @@ void LogController::actionActivated()
 
 void LogController::signalActivated()
 {
-    auto obj   = sender();
-    auto index = senderSignalIndex();
-    auto meta  = obj->metaObject();
+    auto obj= sender();
+    auto index= senderSignalIndex();
+    auto meta= obj->metaObject();
     auto method= meta->method(index);
     manageMessage(QStringLiteral("[signal] - %1").arg(QString::fromUtf8(method.name())), Info);
 }
@@ -218,6 +218,6 @@ void LogController::manageMessage(QString message, LogController::LogLevel type)
     }
     if((m_currentModes & Network) && (type != Hidden))
     {
-        emit sendOffMessage(str, type, category, timestamps);
+        emit sendOffMessage(str, typeToText(type), category, timestamps);
     }
 }
