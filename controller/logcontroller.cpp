@@ -206,7 +206,7 @@ void LogController::manageMessage(QString message, LogController::LogLevel type)
         }
         if(m_logLevel >= type || type == Features || type == Hidden)
         {
-            if((m_currentModes & File) && (m_logfile))
+            if((m_currentModes & File) && (m_logfile) && m_file.device() != nullptr)
             {
                 m_file << str;
             }
