@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include "theme.h"
 
+#include <QColor>
 #include <QDebug>
 #include <QFile>
 #include <QRegularExpression>
@@ -26,6 +27,14 @@
 
 namespace customization
 {
+StyleSheet::StyleSheet(Theme* parent) : QQmlPropertyMap(parent) {}
+void StyleSheet::insertOrUpdate(const QString& key, const QVariant& value)
+{
+    insert(key, value);
+    qDebug() << key << value << "updated";
+    emit valueChanged(key, value);
+}
+
 QString Theme::m_dataPath= "";
 
 Theme::Theme(QObject* parent) : QObject(parent)
@@ -41,9 +50,29 @@ StyleSheet* Theme::styleSheet(const QString& id)
     return it->second;
 }
 
+bool Theme::nightMode() const
+{
+    return m_nightMode;
+}
+
+QString Theme::folder() const
+{
+    return m_nightMode ? QStringLiteral("+dark/") : QString();
+}
+
 void Theme::setPath(const QString& path)
 {
     m_dataPath= path;
+}
+
+void Theme::setNightMode(bool b)
+{
+    if(b == m_nightMode)
+        return;
+    m_nightMode= b;
+    emit nightModeChanged(m_nightMode);
+    emit folderChanged(folder());
+    loadData(m_dataPath);
 }
 
 Theme* Theme::instance()
@@ -63,7 +92,6 @@ void Theme::loadData(const QString& source)
     while(!in.atEnd())
     {
         auto line= file.readLine();
-        qDebug() << line;
         if(line.isEmpty())
             continue;
 
@@ -85,25 +113,74 @@ void Theme::loadData(const QString& source)
                 bool ok;
                 auto intVal= value.toInt(&ok);
                 if(ok)
-                    currentStyleSheet->insert(key, intVal);
+                {
+                    currentStyleSheet->insertOrUpdate(key, intVal);
+                    continue;
+                }
 
                 auto realVal= value.toDouble(&ok);
                 if(ok)
-                    currentStyleSheet->insert(key, realVal);
+                {
+                    currentStyleSheet->insertOrUpdate(key, realVal);
+                    continue;
+                }
+
+                QColor color;
+                color.setNamedColor(value);
+                if(color.isValid())
+                {
+                    currentStyleSheet->insertOrUpdate(key, darkColor(color));
+                }
                 else
-                    currentStyleSheet->insert(key, value);
+                    currentStyleSheet->insertOrUpdate(key, value);
             }
         }
     }
 }
 
-StyleSheet* Theme::addStyleSheet(const QString& name)
+QColor Theme::darkColor(const QColor& color)
 {
-    auto styleSheet= new StyleSheet(this);
-    m_styleSheets.insert({name, styleSheet});
-    return styleSheet;
+    if(!m_nightMode)
+        return color;
+
+    std::vector<int> c({color.red(), color.green(), color.blue()});
+    auto brighness= [](const QColor& color) {
+        return ((color.red() * 299) + (color.blue() * 587) + (color.green() * 114)) / 1000;
+    };
+    auto avg= std::accumulate(c.begin(), c.end(), 0.0) / c.size();
+    auto allEqual= std::all_of(c.begin(), c.end(), [color](int c) { return color.red() == c; });
+    QColor result= color;
+    if(allEqual)
+    {
+        auto cVal= 255 - avg;
+        result= QColor(cVal, cVal, cVal);
+    }
+    else
+    {
+        auto brighnessVal= brighness(result);
+        auto target= 1000 - brighness(result);
+        auto darker= brighnessVal > 500;
+        int i= 0;
+        while(std::abs(brighnessVal - target) > 50 && i < 8)
+        {
+            result= darker ? result.darker(120) : result.lighter(120);
+            brighnessVal= brighness(result);
+            ++i;
+        }
+    }
+
+    return result;
 }
 
-StyleSheet::StyleSheet(Theme* parent) : QQmlPropertyMap(parent) {}
+StyleSheet* Theme::addStyleSheet(const QString& name)
+{
+    auto styleSheet= Theme::styleSheet(name);
+    if(nullptr == styleSheet)
+    {
+        styleSheet= new StyleSheet(this);
+        m_styleSheets.insert({name, styleSheet});
+    }
+    return styleSheet;
+}
 
 } // namespace customization
