@@ -144,22 +144,22 @@ QColor Theme::darkColor(const QColor& color)
         return color;
 
     std::vector<int> c({color.red(), color.green(), color.blue()});
-    auto brighness= [](const QColor& color) {
-        return ((color.red() * 299) + (color.blue() * 587) + (color.green() * 114)) / 1000;
+    auto brighness= [](const QColor& current) {
+        return ((current.red() * 299) + (current.green() * 587) + (current.blue() * 114)) / 1000;
     };
-    auto avg= std::accumulate(c.begin(), c.end(), 0.0) / c.size();
-    auto allEqual= std::all_of(c.begin(), c.end(), [color](int c) { return color.red() == c; });
+    auto avg= std::accumulate(c.begin(), c.end(), 0.0) / static_cast<double>(c.size());
+    auto allEqual= std::all_of(c.begin(), c.end(), [color](int tmp) { return color.red() == tmp; });
     QColor result= color;
     if(allEqual)
     {
-        auto cVal= 255 - avg;
+        auto cVal= static_cast<int>(255 - avg);
         result= QColor(cVal, cVal, cVal);
     }
     else
     {
         auto brighnessVal= brighness(result);
-        auto target= 1000 - brighness(result);
-        auto darker= brighnessVal > 500;
+        auto target= 255 - brighness(result);
+        auto darker= brighnessVal > 128;
         int i= 0;
         while(std::abs(brighnessVal - target) > 50 && i < 8)
         {
