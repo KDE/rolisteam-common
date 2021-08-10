@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.16)
 
 project(common VERSION 1.0.0 DESCRIPTION "Common Elements")
 
@@ -11,8 +11,7 @@ set(CMAKE_AUTORCC ON)
 # Add a compiler flag
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
-set(QT_REQUIRED_VERSION "5.15.0")
-find_package(Qt5 ${QT_REQUIRED_VERSION} CONFIG REQUIRED COMPONENTS Core Widgets Network Qml Gui)
+find_package(Qt6 COMPONENTS Core Widgets Network Qml Gui REQUIRED)
 
 
 set(common_core_header
